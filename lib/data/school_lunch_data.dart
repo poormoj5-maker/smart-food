@@ -2,7 +2,8 @@ class SchoolLunchMeal {
   final String id, name, emoji, description;
   final List<String> ingredients, ageBands;
   final bool needsReheating;
-  const SchoolLunchMeal(this.id,this.name,this.emoji,this.description,this.ingredients,this.ageBands,{this.needsReheating=false});
+  final int prepMinutes;
+  const SchoolLunchMeal(this.id,this.name,this.emoji,this.description,this.ingredients,this.ageBands,{this.needsReheating=false,this.prepMinutes=15});
 }
 // Ingredient tags drive safety filtering. Add complete ingredient/allergen tags whenever a meal changes.
 const schoolLunchMeals=<SchoolLunchMeal>[
