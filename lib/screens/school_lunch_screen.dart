@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/school_lunch_profile.dart';
 import '../services/school_lunch_service.dart';
-import '../widgets/shared.dart';
 
 class SchoolLunchScreen extends StatefulWidget {
   const SchoolLunchScreen({super.key});
@@ -12,6 +11,21 @@ class SchoolLunchScreen extends StatefulWidget {
 
 class _SchoolLunchScreenState extends State<SchoolLunchScreen> {
   SchoolLunchProfile? p;
+  bool loading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadProfile();
+  }
+
+  Future<void> _loadProfile() async {
+    final loaded = await SchoolLunchService.load();
+    setState(() {
+      p = loaded;
+      loading = false;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -22,23 +36,25 @@ class _SchoolLunchScreenState extends State<SchoolLunchScreen> {
           title: const Text('چاشت مدرسه'),
           backgroundColor: const Color(0xFF1E4D38),
         ),
-        body: Padding(
-          padding: const EdgeInsets.all(16),
-          child: p == null ? _form() : _content(p!),
-        ),
+        body: loading
+            ? const Center(child: CircularProgressIndicator())
+            : Padding(
+                padding: const EdgeInsets.all(16),
+                child: p == null ? _form() : _content(p!),
+              ),
       ),
     );
   }
 
   Widget _form() {
     int age = 8;
-    String taste = 'شیرین';
     final allergies = <String>{};
 
     return StatefulBuilder(
       builder: (context, setStateSB) => ListView(
         children: [
-          const Text('تنظیم پروفایل دانش‌آموز', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+          const Text('تنظیم پروفایل دانش‌آموز',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
           const SizedBox(height: 12),
           Text('سن: $age سال'),
           Slider(
@@ -48,15 +64,6 @@ class _SchoolLunchScreenState extends State<SchoolLunchScreen> {
             divisions: 13,
             label: '$age',
             onChanged: (v) => setStateSB(() => age = v.toInt()),
-          ),
-          const SizedBox(height: 12),
-          const Text('ذائقه ترجیحی:'),
-          DropdownButton<String>(
-            value: taste,
-            items: ['شیرین', 'شور', 'ملس', 'ساده']
-                .map((t) => DropdownMenuItem(value: t, child: Text(t)))
-                .toList(),
-            onChanged: (v) => setStateSB(() => taste = v ?? 'شیرین'),
           ),
           const SizedBox(height: 16),
           const Text('آلرژی‌ها:'),
@@ -79,13 +86,20 @@ class _SchoolLunchScreenState extends State<SchoolLunchScreen> {
           ),
           const SizedBox(height: 24),
           ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF1E4D38)),
-            onPressed: () {
+            style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF1E4D38)),
+            onPressed: () async {
+              final newProfile = SchoolLunchProfile(
+                age: age,
+                allergies: allergies.toList(),
+              );
+              await SchoolLunchService.save(newProfile);
               setState(() {
-                p = SchoolLunchProfile(age: age, taste: taste, allergies: allergies);
+                p = newProfile;
               });
             },
-            child: const Text('دریافت برنامه چاشت', style: TextStyle(color: Colors.white)),
+            child: const Text('ذخیره و دریافت پیشنهادها',
+                style: TextStyle(color: Colors.white)),
           ),
         ],
       ),
@@ -93,7 +107,7 @@ class _SchoolLunchScreenState extends State<SchoolLunchScreen> {
   }
 
   Widget _content(SchoolLunchProfile profile) {
-    final suggestions = SchoolLunchService.getSuggestions(profile);
+    final suggestions = SchoolLunchService.ranked(profile);
     return ListView(
       children: [
         Card(
@@ -101,22 +115,26 @@ class _SchoolLunchScreenState extends State<SchoolLunchScreen> {
           child: Padding(
             padding: const EdgeInsets.all(12),
             child: Text(
-              'سن: ${profile.age} سال | ذائقه: ${profile.taste}\nآلرژی‌ها: ${profile.allergies.isEmpty ? "ندارد" : profile.allergies.join(", ")}',
+              'سن: ${profile.age} سال\nآلرژی‌ها: ${profile.allergies.isEmpty ? "ندارد" : profile.allergies.join(", ")}',
               style: const TextStyle(fontWeight: FontWeight.bold),
             ),
           ),
         ),
         const SizedBox(height: 12),
-        const Text('پیشنهادهای روزانه:', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+        const Text('پیشنهادهای متناسب:',
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
         const SizedBox(height: 8),
-        for (final s in suggestions)
-          Card(
-            child: ListTile(
-              leading: Text(s.emoji, style: const TextStyle(fontSize: 28)),
-              title: Text(s.title),
-              subtitle: Text(s.description),
+        if (suggestions.isEmpty)
+          const Text('موردی با این مشخصات یافت نشد.')
+        else
+          for (final s in suggestions)
+            Card(
+              child: ListTile(
+                leading: Text(s.emoji, style: const TextStyle(fontSize: 28)),
+                title: Text(s.name),
+                subtitle: Text('زمان آماده‌سازی: ${s.prepMinutes} دقیقه'),
+              ),
             ),
-          ),
         const SizedBox(height: 16),
         OutlinedButton(
           onPressed: () => setState(() => p = null),
