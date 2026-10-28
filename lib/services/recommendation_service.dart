@@ -1,0 +1,2 @@
+import '../models/recipe.dart';
+class RecommendationService {static List<Recipe> rank(List<Recipe> all,{required Set<String> pantry,required String city,required String level,bool localFirst=true}){final filtered=all.where((r)=>level=='همه'||r.complexity==level).toList();filtered.sort((a,b){int score(Recipe r){final match=r.ingredients.where((i)=>pantry.contains(i.id)).length;final ratio=r.ingredients.isEmpty?0:match*100~/r.ingredients.length;return ratio+(localFirst&&r.cityTags.contains(city)?20:0);}return score(b).compareTo(score(a));});return filtered;}}
