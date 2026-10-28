@@ -9,6 +9,7 @@ import 'screens/home_screen.dart';
 import 'screens/pantry_screen.dart';
 import 'screens/favorites_screen.dart';
 import 'screens/settings_screen.dart';
+import 'widgets/shared.dart';
 void main()=>runApp(const SmartFoodApp());
 class SmartFoodApp extends StatelessWidget {const SmartFoodApp({super.key});@override Widget build(BuildContext c)=>MaterialApp(title:'غذای هوشمند',debugShowCheckedModeBanner:false,theme:AppTheme.light,locale:const Locale('fa'),supportedLocales:const [Locale('fa')],localizationsDelegates:const [GlobalMaterialLocalizations.delegate,GlobalWidgetsLocalizations.delegate,GlobalCupertinoLocalizations.delegate],home:const Directionality(textDirection:TextDirection.rtl,child:RootPage()));}
 class RootPage extends StatefulWidget {const RootPage({super.key});@override State<RootPage> createState()=>_RootPageState();}
